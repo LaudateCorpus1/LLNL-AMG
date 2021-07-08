@@ -1,0 +1,74 @@
+List of files:
+
+./parcsr_ls/Makefile
+./parcsr_ls/Makefile.orig
+./parcsr_ls/spmv_opt.c
+./seq_mv/seq_mv.h
+./seq_mv/seq_mv.h.orig
+./seq_mv/csr_matrix.c
+./seq_mv/csr_matrix.c.orig
+./seq_mv/csr_matvec.c
+./seq_mv/csr_matvec.c.orig
+./test/amg.c
+./test/amg.c.orig
+./Makefile.include
+./Makefile.include.orig
+
+Makefile.include
+Setup to use MKL (APL is commented out)
+
+parcsr_ls/Makefile
+Added the new routing parcsr_ls/spmv_opt.c to the list of routines compiled
+
+parcsr_ls/spmv_opt.c
+New routine to set up sparse matrix interface - avoids repetition.
+
+test/amg.c
+Updated to call the new sparse matrix setup routine.
+
+seq_mv/seq_mv.h
+Modified CSR data structure to contain a pointer to library specific CSR handle
+
+seq_mv/csr_matvec.c
+Call to library specifc SpMV for hypre_CSRMatrixMatvecOutOfPlace() - picked up by
+default for hypre_CSRMatrixMatvec() since that is just a wrapper. Also added
+to hypre_CSRMatrixMatvecT().
+
+Notes
+Run with 
+
+   mpirun -np 8 ./test/amg -printallstats -P 2 2 2 -n 50 50 50
+
+See:
+   base_n8_PS50.log for output from unmodified code
+
+Selective control of library replacement calls is enabled by 
+using environment variables:
+
+      export HPE_CSR_MAX_MG_LEVEL=2
+      	     Example restricting replacement calls to level 0 and 1 only.
+	     Valid values between 0 (all replacements disabled)
+	     and actual number of levels.
+
+      export HPE_CSR_BLOCKS_USED=2
+      	     Example restricting replacement calls to the offd blocks only.
+	     This is a 2-bit mask with valid values of {01,10,11}.
+	     The following values are used:
+	     	 01 = 0x1 = diag is replaced
+		 10 = 0x2 = offd is replaced
+		 11 = 0x3 = diag and offd are replaced
+	     
+      export HPE_CSR_SKIP_SMOOTHER_A=true
+      	     Replacement of call for smoother matrix A is skipped.
+	     Actual value of variable is ignored (anything),
+	     check is for whether variable is set.
+	     
+      export HPE_CSR_SKIP_RESTRICTER_R=true
+      	     Replacement of call for restricter matrix R is skipped.
+	     Actual value of variable is ignored (anything),
+	     check is for whether variable is set.
+	     
+      export HPE_CSR_SKIP_INTERPOLATER_P=true
+      	     Replacement of call for interpolater matrix P is skipped.
+	     Actual value of variable is ignored (anything),
+	     check is for whether variable is set.
